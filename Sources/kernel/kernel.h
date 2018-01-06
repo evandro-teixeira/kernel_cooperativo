@@ -47,6 +47,13 @@ typedef enum
 
 typedef enum
 {
+	kernel_task_running = true,
+	kernel_task_waiting = false,
+}kernel_task;
+
+typedef enum
+{
+	//Task_Running = 0,//
 	Task_Ready = 0,
 	Task_Blocked,
 	Task_Paused,
@@ -67,6 +74,7 @@ typedef struct
 	uint8_t state;
 	uint8_t priority;
 	kernel_tick pausedtime;
+	kernel_task kernel_task_state;
 }strTask;
 
 typedef struct
@@ -74,6 +82,9 @@ typedef struct
 	strTask task_vetor[NUMBER_TASK];
 	uint8_t position_index;
 	uint8_t counter_task;
+	uint8_t index_high;
+	uint8_t index_medium;
+	uint8_t index_low;
 }strKernel;
 
 typedef struct

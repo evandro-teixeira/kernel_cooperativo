@@ -54,13 +54,13 @@ int main(void)
 		kernel_error();
 	}
 
-	if(kernel_add_task(app_task_led_red,Priority_Low,Task_Ready,&id_task_led_red) == kernel_fail)
+	if(kernel_add_task(app_task_led_red,Priority_High,Task_Ready,&id_task_led_red) == kernel_fail)
 	{
 		printf("\n\rFalha em add tarefa ao kernel");
 		kernel_error();
 	}
 
-	if(kernel_add_task(app_task_led_blue,Priority_Low,Task_Ready,&id_task_led_blue) == kernel_fail)
+	if(kernel_add_task(app_task_led_blue,Priority_High,Task_Ready,&id_task_led_blue) == kernel_fail)
 	{
 		printf("\n\rFalha em add tarefa ao kernel");
 		kernel_error();

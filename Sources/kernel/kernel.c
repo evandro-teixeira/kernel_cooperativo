@@ -47,10 +47,13 @@ static void kernel_setup_systick(void)
  ****************************************************************************************************/
 kernel_status kernel_init(void)
 {
-	strTask task_ilde = {kernel_task_idle,Task_Ready,Priority_Idle,0};
+	strTask task_ilde = {kernel_task_idle,Task_Ready,Priority_Idle,0,kernel_task_waiting};
 	vKernel.position_index = 0;
 	vKernel.counter_task = 0;
 	vKernel.task_vetor[ID_IDLE] = task_ilde;
+	vKernel.index_high = 1;
+	vKernel.index_medium = 1;
+	vKernel.index_low = 1;
 	//vFlag.flag = 0;
 	kernel_setup_systick();
 	return kernel_ok;
@@ -68,6 +71,7 @@ kernel_status kernel_add_task(ptrTask task,task_priority priority,task_state sta
 		vKernel.task_vetor[vKernel.counter_task].priority = priority;
 		vKernel.task_vetor[vKernel.counter_task].state = state;
 		vKernel.task_vetor[vKernel.counter_task].pausedtime = 0;
+		vKernel.task_vetor[vKernel.counter_task].kernel_task_state = kernel_task_waiting;
 
 		*id = vKernel.counter_task;
 
@@ -81,6 +85,9 @@ kernel_status kernel_add_task(ptrTask task,task_priority priority,task_state sta
 void kernel_run(void)
 {
 	uint8_t i = 0;
+	//static uint8_t i_high = 1;
+	//static uint8_t i_medium = 1;
+	//static uint8_t i_low = 1;
 
 	while(1)
 	{
@@ -102,40 +109,79 @@ void kernel_run(void)
 		//
 		// busca tarefa de alta prioridade pronta para ser executada
 		//
-		for(i=1;i<=(vKernel.counter_task + 1);i++)
+		for(i=vKernel.index_high;i<=(vKernel.counter_task + 1);i++)
 		{
 			if( (vKernel.task_vetor[i].priority == Priority_High) &&
-				(vKernel.task_vetor[i].state == Task_Ready) )
+				(vKernel.task_vetor[i].state == Task_Ready) &&
+				(vKernel.task_vetor[i].kernel_task_state == kernel_task_waiting))
+			{
+				vKernel.index_high = i;
+				vKernel.index_high++;
+				if(vKernel.index_high>=(vKernel.counter_task + 1))
+					vKernel.index_high = 1;
+
 				break;
+			}
 		}
 		if(i > (vKernel.counter_task + 1))
 		{
 			// busca tarefa de media prioridade para ser executada
-			for(i=1;i<=(vKernel.counter_task + 1);i++)
+			for(i=vKernel.index_medium;i<=(vKernel.counter_task + 1);i++)
 			{
 				if( (vKernel.task_vetor[i].priority == Priority_Medium) &&
-					(vKernel.task_vetor[i].state == Task_Ready) )
+					(vKernel.task_vetor[i].state == Task_Ready) &&
+					(vKernel.task_vetor[i].kernel_task_state == kernel_task_waiting))
+				{
+					vKernel.index_medium = i;
+					vKernel.index_medium++;
+					if(vKernel.index_medium>=(vKernel.counter_task + 1))
+						vKernel.index_medium = 1;
+
 					break;
+				}
 			}
 			if(i > (vKernel.counter_task + 1))
 			{
 				// busca tarefa de baixa prioridade para ser executada
-				for(i=1;i<=(vKernel.counter_task + 1);i++)
+				for(i=vKernel.index_low;i<=(vKernel.counter_task + 1);i++)
 				{
 					if( (vKernel.task_vetor[i].priority == Priority_Low) &&
-						(vKernel.task_vetor[i].state == Task_Ready) )
+						(vKernel.task_vetor[i].state == Task_Ready) &&
+						(vKernel.task_vetor[i].kernel_task_state == kernel_task_waiting))
+					{
+						vKernel.index_low = i;
+						vKernel.index_low++;
+						if(vKernel.index_low>=(vKernel.counter_task + 1))
+							vKernel.index_low = 1;
+
 						break;
+					}
 				}
 				if(i > (vKernel.counter_task + 1))
+				{
+					vKernel.task_vetor[vKernel.position_index].kernel_task_state = kernel_task_waiting;
 					vKernel.position_index = ID_IDLE;	// Executa tarefa ilde
+				}
 				else
+				{
+					vKernel.task_vetor[vKernel.position_index].kernel_task_state = kernel_task_waiting;
 					vKernel.position_index = i;
+				}
 			}
 			else
+			{
+				vKernel.task_vetor[vKernel.position_index].kernel_task_state = kernel_task_waiting;
 				vKernel.position_index = i;
+			}
 		}
 		else
+		{
+			vKernel.task_vetor[vKernel.position_index].kernel_task_state = kernel_task_waiting;
 			vKernel.position_index = i;
+		}
+
+		// muda estado da tarefa
+		vKernel.task_vetor[vKernel.position_index].kernel_task_state = kernel_task_running;
 
 		// executa tarefa
 		(*vKernel.task_vetor[vKernel.position_index].task)();
